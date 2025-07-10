@@ -64,4 +64,8 @@ public class GlucoseService {
             throw new RuntimeException("Paciente no encontrado con el ID: " + patientId);
         }
     }
+
+    public void saveSingle(GlucoseData data) {
+        glucoseDataRepository.save(data);
+    }
 }

@@ -1,9 +1,7 @@
 package com.backend.hormonalcare.medicalRecord.interfaces.rest;
 
-import com.backend.hormonalcare.medicalRecord.domain.services.GlucoseData;
-import com.backend.hormonalcare.medicalRecord.domain.services.GlucoseService;
-import com.backend.hormonalcare.medicalRecord.domain.services.InsulinData;
-import com.backend.hormonalcare.medicalRecord.domain.services.InsulinService;
+import com.backend.hormonalcare.medicalRecord.domain.model.aggregates.Patient;
+import com.backend.hormonalcare.medicalRecord.domain.services.*;
 import com.backend.hormonalcare.medicalRecord.infrastructure.persistence.jpa.repositories.PatientRepository;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -12,7 +10,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 
 import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping(value = "/api/v1/patient", produces = "application/json")
@@ -27,7 +27,35 @@ public class DeviceController {
     @Autowired
     private PatientRepository patientRepository;
 
+    @Autowired
+    private BlynkClient blynkClient;
     // Endpoint para registrar los niveles de glucosa de un paciente
+    @PostMapping("/{patientId}/fetch-glucose-from-blynk")
+    public ResponseEntity<Integer> fetchAndRecordGlucoseFromBlynk(@PathVariable Long patientId) {
+        try {
+            // Obtener nivel de glucosa desde Blynk
+            int glucoseLevel = blynkClient.fetchGlucoseLevel();
+
+            // Verificar existencia del paciente
+            Patient patient = patientRepository.findById(patientId)
+                    .orElseThrow(() -> new RuntimeException("Patient not found"));
+
+            // Crear GlucoseData con paciente y hora actual
+            GlucoseData data = new GlucoseData();
+            data.setPatient(patient);
+            data.setGlucoseLevel(glucoseLevel);
+            data.setTime(LocalTime.now());
+
+            // Guardar en base de datos
+            glucoseService.saveSingle(data);
+
+            return new ResponseEntity<>( glucoseLevel , HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>( HttpStatus.BAD_REQUEST);
+        }
+    }
+
+
     @PostMapping("/{patientId}/glucose")
     public ResponseEntity<String> recordGlucoseData(
             @PathVariable Long patientId,
@@ -52,6 +80,32 @@ public class DeviceController {
             return new ResponseEntity<>("Insulin data saved successfully", HttpStatus.CREATED);
         } catch (Exception e) {
             return new ResponseEntity<>("Error saving insulin data: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+        }
+    }
+    @PostMapping("/{patientId}/auto-insulin")
+    public ResponseEntity<Long> recordSingleInsulinEntry(
+            @PathVariable Long patientId,
+            @RequestBody Map<String, Object> body) {
+        try {
+            if (body == null || !body.containsKey("units")) {
+                return new ResponseEntity<>(-1L, HttpStatus.BAD_REQUEST);
+            }
+
+            int units = Integer.parseInt(body.get("units").toString());
+
+            Patient patient = patientRepository.findById(patientId)
+                    .orElseThrow(() -> new RuntimeException("Patient not found"));
+
+            InsulinData data = new InsulinData();
+            data.setPatient(patient);
+            data.setUnits(units);
+            data.setTime(LocalTime.now());
+
+            insulinService.saveSingle(data);
+
+            return new ResponseEntity<>((long) units, HttpStatus.CREATED);
+        } catch (Exception e) {
+            return new ResponseEntity<>(-1L, HttpStatus.BAD_REQUEST);
         }
     }
 

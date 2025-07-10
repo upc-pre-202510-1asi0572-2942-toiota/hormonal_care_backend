@@ -40,4 +40,8 @@ public class InsulinService {
         System.out.println("Emergency insulin triggered for patient with ID: " + patientId);
         // Aquí implementas la lógica para el manejo de emergencia
     }
+
+    public void saveSingle(InsulinData data) {
+        insulinDataRepository.save(data);
+    }
 }
