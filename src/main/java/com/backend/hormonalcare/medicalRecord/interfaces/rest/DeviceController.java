@@ -3,6 +3,7 @@ package com.backend.hormonalcare.medicalRecord.interfaces.rest;
 import com.backend.hormonalcare.medicalRecord.domain.model.aggregates.Patient;
 import com.backend.hormonalcare.medicalRecord.domain.services.*;
 import com.backend.hormonalcare.medicalRecord.infrastructure.persistence.jpa.repositories.PatientRepository;
+import com.backend.hormonalcare.medicalRecord.interfaces.dto.InsulinRequest;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -84,13 +85,13 @@ public class DeviceController {
     @PostMapping("/{patientId}/auto-insulin")
     public ResponseEntity<Long> recordSingleInsulinEntry(
             @PathVariable Long patientId,
-            @RequestBody Map<String, Object> body) {
+            @RequestBody InsulinRequest request) {
         try {
-            if (body == null || !body.containsKey("units")) {
+            int units = request.getUnits();
+
+            if (units <= 0) {
                 return new ResponseEntity<>(-1L, HttpStatus.BAD_REQUEST);
             }
-
-            int units = Integer.parseInt(body.get("units").toString());
 
             Patient patient = patientRepository.findById(patientId)
                     .orElseThrow(() -> new RuntimeException("Patient not found"));
@@ -107,7 +108,6 @@ public class DeviceController {
             return new ResponseEntity<>(-1L, HttpStatus.BAD_REQUEST);
         }
     }
-
     // Endpoint para obtener los datos de glucosa de un paciente para una fecha específica
     @GetMapping("/{patientId}/glucose/{date}")
     public ResponseEntity<List<GlucoseData>> getGlucoseDataForDate(
