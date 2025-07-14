@@ -3,6 +3,7 @@ package com.backend.hormonalcare.profile.interfaces.rest;
 import com.backend.hormonalcare.profile.domain.model.queries.GetProfileByIdQuery;
 // import com.backend.hormonalcare.profile.domain.model.queries.GetProfileByNameQuery;
 // import com.backend.hormonalcare.profile.domain.model.queries.GetProfileByUserIdQuery;
+import com.backend.hormonalcare.profile.domain.model.queries.GetProfileByNameQuery;
 import com.backend.hormonalcare.profile.domain.services.ProfileCommandService;
 import com.backend.hormonalcare.profile.domain.services.ProfileQueryService;
 import com.backend.hormonalcare.profile.interfaces.rest.resources.*;
@@ -18,6 +19,7 @@ import com.backend.hormonalcare.profile.domain.model.aggregates.Profile;
 import com.backend.hormonalcare.profile.domain.model.commands.DeleteProfileImageCommand;
 
 import java.io.IOException;
+import java.util.List;
 // import java.text.ParseException;
 // import java.text.SimpleDateFormat;
 // import java.util.Date;
@@ -104,15 +106,15 @@ public class ProfileController {
     //     return ResponseEntity.ok(profileResource);
     // }
 
-    // @GetMapping("/search")
-    // public ResponseEntity<List<ProfileResource>> getProfilesByName(@RequestParam String name) {
-    //     var query = new GetProfileByNameQuery(name);
-    //     var profiles = profileQueryService.handle(query);
-    //     var resources = profiles.stream()
-    //             .map(ProfileResourceFromEntityAssembler::toResourceFromEntity)
-    //             .toList();
-    //     return ResponseEntity.ok(resources);
-    // }
+     @GetMapping("/search")
+     public ResponseEntity<List<ProfileResource>> getProfilesByName(@RequestParam String name) {
+         var query = new GetProfileByNameQuery(name);
+         var profiles = profileQueryService.handle(query);
+         var resources = profiles.stream()
+                 .map(ProfileResourceFromEntityAssembler::toResourceFromEntity)
+                 .toList();
+         return ResponseEntity.ok(resources);
+     }
 
     // @PutMapping("/{profileId}/full-update")
     // public ResponseEntity<ProfileResource> updateProfile(@PathVariable Long profileId, @RequestBody UpdateProfileResource updateProfileResource){
